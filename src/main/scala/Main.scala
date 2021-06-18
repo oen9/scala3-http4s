@@ -1,27 +1,59 @@
 import cats.effect.*
+import cats.effect.implicits.*
 import cats.effect.std.Console
+import cats.effect.unsafe.IORuntime
 import cats.implicits.*
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.SelfAwareStructuredLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.concurrent.duration.*
 
-object Main extends IOApp:
+object Main extends IOApp, Logging:
+  //given [F[_]: Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLogger[F]
+
   override def run(args: List[String]): IO[ExitCode] =
     for {
       _ <- app[IO]()
-      _ <- IO.println("App ended. We'll wait 2 seconds")
+      _ <- Logger[IO].info("App ended. We'll wait 2 seconds")
       _ <- IO.sleep(2.second)
-      _ <- IO.println("starting http4s app")
+      _ <- Logger[IO].info("starting http4s app")
       _ <- http4sApp[IO]()
     } yield ExitCode.Success
 
-  def app[F[_]: Async: Console](): F[Unit] =
+  def app[F[_]: Async](): F[Unit] =
     for {
-      _ <- Console[F].println("Hellooo ;)")
+      _ <- Logger[F].info("Hellooo ;)")
       _ <- Async[F].start {
-        Async[F].sleep(1.second) *> Console[F].println("I'm async")
+        Async[F].sleep(1.second) *> Logger[F].info("I'm async")
       }
     } yield ()
 
-  def http4sApp[F[_]: Async: Console](): F[Unit] =
-    Async[F].unit
+  def http4sApp[F[_]: Async](): F[Unit] = {
+    import org.http4s.*, org.http4s.dsl.Http4sDsl
+
+    val dsl = Http4sDsl[F]
+    import dsl._
+
+    val helloWorldService = HttpRoutes.of[F] {
+      case GET -> Root / "hello" / name =>
+        Ok(s"Hello, $name.")
+    }
+
+    import org.http4s.server.Router
+    import org.http4s.implicits.*
+    val httpApp = Router("/" -> helloWorldService).orNotFound
+
+    import org.http4s.blaze.server._
+    for {
+      ec <- Async[F].executionContext
+      fiber <- BlazeServerBuilder[F](ec)
+        .bindHttp(8080, "localhost")
+        .withHttpApp(httpApp)
+        .resource
+        .use(_ => Async[F].never)
+        .start
+      _ <- fiber.join // hehe just to use fiber
+    }  yield ()
+  }
 
 def msg = "I was compiled by Scala 3. :)"
