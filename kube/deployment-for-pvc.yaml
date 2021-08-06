@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: scala3-writer
+spec:
+  ports:
+  - name: "8080"
+    port: 8080
+    targetPort: 8080
+  selector:
+    app: scala3-writer
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: scala3-writer
+  name: scala3-writer-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scala3-writer
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled
+      labels:
+        app: scala3-writer
+    spec:
+      containers:
+        #- image: oen9/scala3-http4s:0.1.1
+      - image: mongo
+        #- image: ubuntu:21.10
+        #- image: ubuntu
+        name: scala3-writer
+        volumeMounts:
+        - name: my-data
+          mountPath: /data
+            #livenessProbe:
+            #    httpGet:
+            #      path: /
+            #      port: 8080
+            #    initialDelaySeconds: 30
+        ports:
+        - containerPort: 8080
+      restartPolicy: Always
+      volumes:
+      - name: my-data
+        persistentVolumeClaim:
+          claimName: my-pvc
+---

@@ -7,6 +7,7 @@ import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import scala.concurrent.duration.*
+import java.net.InetAddress
 
 object Main extends IOApp, Logging:
   //given [F[_]: Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLogger[F]
@@ -35,6 +36,12 @@ object Main extends IOApp, Logging:
     import dsl._
 
     val helloWorldService = HttpRoutes.of[F] {
+      case GET -> Root =>
+        for {
+          hostname <- Sync[F].delay(InetAddress.getLocalHost.getHostName)
+          result <- Ok(s"me: $hostname")
+        } yield result
+
       case GET -> Root / "hello" / name =>
         Ok(s"Hello, $name.")
     }
@@ -47,7 +54,7 @@ object Main extends IOApp, Logging:
     for {
       ec <- Async[F].executionContext
       fiber <- BlazeServerBuilder[F](ec)
-        .bindHttp(8080, "localhost")
+        .bindHttp(8080, "0.0.0.0")
         .withHttpApp(httpApp)
         .resource
         .use(_ => Async[F].never)
