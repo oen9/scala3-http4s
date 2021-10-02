@@ -14,7 +14,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name         := "scala3-http4s",
-    version      := "0.1.3",
+    version      := "0.1.4",
     scalaVersion := scala3Version,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "log4cats-core"       % ver.log4cats,
