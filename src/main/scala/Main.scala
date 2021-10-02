@@ -3,14 +3,19 @@ import cats.effect.implicits.*
 import cats.effect.std.Console
 import cats.effect.unsafe.IORuntime
 import cats.implicits.*
+import cats.syntax.show
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import scala.concurrent.duration.*
+
 import java.net.InetAddress
+import java.util.Currency
+import scala.concurrent.duration.*
 
 object Main extends IOApp, Logging:
   //given [F[_]: Async]: SelfAwareStructuredLogger[F] = Slf4jLogger.getLogger[F]
+
+  case class SrvInfo(hostname: String)
 
   override def run(args: List[String]): IO[ExitCode] =
     for {
@@ -35,11 +40,15 @@ object Main extends IOApp, Logging:
     val dsl = Http4sDsl[F]
     import dsl._
 
+    import io.circe.syntax.*
+    import io.circe.generic.auto.*
+    import org.http4s.circe.*
     val helloWorldService = HttpRoutes.of[F] {
       case GET -> Root =>
         for {
           hostname <- Sync[F].delay(InetAddress.getLocalHost.getHostName)
-          result <- Ok(s"me: $hostname")
+          srvInfo = SrvInfo(hostname = hostname)
+          result <- Ok(srvInfo.asJson)
         } yield result
 
       case GET -> Root / "hello" / name =>
@@ -52,15 +61,16 @@ object Main extends IOApp, Logging:
 
     import org.http4s.blaze.server._
     for {
-      ec <- Async[F].executionContext
+      ec  <- Async[F].executionContext
+      cfg <- AppConfig.load()
       fiber <- BlazeServerBuilder[F](ec)
-        .bindHttp(8080, "0.0.0.0")
+        .bindHttp(cfg.http.port, cfg.http.host)
         .withHttpApp(httpApp)
         .resource
         .use(_ => Async[F].never)
         .start
       _ <- fiber.join // hehe just to use fiber
-    }  yield ()
+    } yield ()
   }
 
 def msg = "I was compiled by Scala 3. :)"
