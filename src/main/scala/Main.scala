@@ -19,11 +19,13 @@ object Main extends IOApp, Logging:
 
   override def run(args: List[String]): IO[ExitCode] =
     for {
-      _ <- app[IO]()
-      _ <- Logger[IO].info("App ended. We'll wait 2 seconds")
-      _ <- IO.sleep(2.second)
-      _ <- Logger[IO].info("starting http4s app")
-      _ <- http4sApp[IO]()
+      myClass <- MyClass[IO]()
+      _       <- myClass.foo()
+      _       <- app[IO]()
+      _       <- Logger[IO].info("App ended. We'll wait 2 seconds")
+      _       <- IO.sleep(2.second)
+      _       <- Logger[IO].info("starting http4s app")
+      _       <- http4sApp[IO]()
     } yield ExitCode.Success
 
   def app[F[_]: Async](): F[Unit] =
@@ -61,9 +63,8 @@ object Main extends IOApp, Logging:
 
     import org.http4s.blaze.server._
     for {
-      ec  <- Async[F].executionContext
       cfg <- AppConfig.load()
-      fiber <- BlazeServerBuilder[F](ec)
+      fiber <- BlazeServerBuilder[F]
         .bindHttp(cfg.http.port, cfg.http.host)
         .withHttpApp(httpApp)
         .resource

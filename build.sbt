@@ -1,14 +1,14 @@
 import com.typesafe.sbt.packager.docker.DockerPermissionStrategy
 
 val ver = new {
-  val http4s     = "0.23.1"
-  val catsEffect = "3.2.2"
-  val log4cats   = "2.1.1"
+  val http4s     = "0.23.10"
+  val catsEffect = "3.3.5"
+  val log4cats   = "2.2.0"
   val logback    = "1.2.5"
   val circe      = "0.14.1"
 }
 
-val scala3Version = "3.0.2"
+val scala3Version = "3.1.1"
 
 lazy val root = project
   .in(file("."))
@@ -27,9 +27,9 @@ lazy val root = project
       "org.typelevel" %% "cats-effect"         % ver.catsEffect,
       "io.circe"      %% "circe-core"          % ver.circe,
       "io.circe"      %% "circe-generic"       % ver.circe,
-      "com.typesafe"   % "config"              % "1.4.1"
-      //"com.github.pureconfig" %% "pureconfig" % "0.16.0",
-      //("com.github.pureconfig" %% "pureconfig" % "0.16.0").cross(CrossVersion.for3Use2_13),
+      "com.typesafe"   % "config"              % "1.4.1",
+      //"com.github.pureconfig" %% "pureconfig" % "0.17.0",
+      ("com.github.pureconfig" %% "pureconfig" % "0.17.1").cross(CrossVersion.for3Use2_13)
     ),
     libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
     dockerExposedPorts                   := Seq(8080),
