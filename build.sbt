@@ -1,8 +1,8 @@
 import com.typesafe.sbt.packager.docker.DockerPermissionStrategy
 
 val ver = new {
-  val http4s     = "0.23.10"
-  val catsEffect = "3.3.5"
+  val http4s     = "0.23.11"
+  val catsEffect = "3.3.9"
   val log4cats   = "2.2.0"
   val logback    = "1.2.5"
   val circe      = "0.14.1"
@@ -14,7 +14,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name         := "scala3-http4s",
-    version      := "0.1.4",
+    version      := "0.1.5",
     scalaVersion := scala3Version,
     libraryDependencies ++= Seq(
       "org.typelevel" %% "log4cats-core"       % ver.log4cats,
@@ -31,7 +31,9 @@ lazy val root = project
       //"com.github.pureconfig" %% "pureconfig" % "0.17.0",
       ("com.github.pureconfig" %% "pureconfig" % "0.17.1").cross(CrossVersion.for3Use2_13)
     ),
-    libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test",
+    libraryDependencies ++= Seq(
+      "org.scalameta" %% "munit" % "0.7.29" % Test
+    ),
     dockerExposedPorts                   := Seq(8080),
     dockerBaseImage                      := "oen9/sjdk:0.3",
     Docker / daemonUserUid               := None,
