@@ -34,10 +34,11 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "org.scalameta" %% "munit" % "0.7.29" % Test
     ),
-    dockerExposedPorts                   := Seq(8080),
-    dockerBaseImage                      := "oen9/sjdk:0.3",
-    Docker / daemonUserUid               := None,
-    Docker / daemonUser                  := "root"
+    dockerExposedPorts      := Seq(8080),
+    dockerBaseImage         := "oen9/sjdk:0.3",
+    Docker / dockerUsername := Some("oen9"),
+    Docker / daemonUserUid  := None,
+    Docker / daemonUser     := "root"
   )
   .enablePlugins(JavaAppPackaging)
   .enablePlugins(DockerPlugin)
